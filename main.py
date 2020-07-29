@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def distance(pointA, pointB, _norm=np.linalg.norm):
     return _norm(pointA - pointB, axis=1)
@@ -10,12 +11,13 @@ class KNNeighbors:
         self.k = k
 
     def fit(self, points, classes):
-        self.points = points.reshape(-1, points.shape)
-        self.classes = classes.reshape(-1, 1)
+        self.points = points.values.reshape(-1, points.shape[1])
+        self.classes = classes.values.reshape(-1, 1)
 
     def predict(self, point):
         distances = np.hstack((self.points, self.formula(self.points, point).reshape(-1, 1), self.classes))
-        distances = np.array(distance, dtype=[('x', float), ('y', float), ('d', float), ('class', int)])
-        distances = np.sort(distances, order='d')
-        classes, frequency = np.unique(distances['class'][self.k], return_counts=True)
-        return classes[frequency.argmax()]
+        distances = pd.DataFrame(data=distances, columns=['x', 'y', 'dist', 'class'])
+        distances = distances.sort_values(by='dist')
+        classification = distances.iloc[:self.k]['class'].value_counts().index[0]
+
+        return classification
